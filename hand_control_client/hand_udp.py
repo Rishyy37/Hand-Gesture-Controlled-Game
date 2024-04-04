@@ -107,7 +107,7 @@ with mp_hands.Hands(
                 # print(distance)
                 jump.append(distance)
                 if len(jump) > 2:
-                    if jump[-1] <= 0.14:
+                    if jump[-1] <= 0.13:
                         direction_byte = b'\x05'
                         print("jump")
                         client_socket.sendto(direction_byte, server_address)

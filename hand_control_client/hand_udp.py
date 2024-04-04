@@ -20,6 +20,7 @@ start = time.time()
 frames = 0
 
 prev_landamark = None
+jump = []
 
 def detect_movement(prev,current,keyboard):
     dx = current[0][0] - prev[0][0]
@@ -92,8 +93,8 @@ with mp_hands.Hands(
                 #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x}, '
                 #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y})'
                 # )
-                # wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
-                # middle_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
+                wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
+                middle_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
                 thumb = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
                 index_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
                 dis_index_thumb = np.sqrt((index_tip.x-thumb.x)**2 + (index_tip.y-thumb.y)**2 + (index_tip.z-thumb.z)**2)
@@ -101,9 +102,18 @@ with mp_hands.Hands(
                 # print(f"z index:{index_tip.z}")
                 
                 # Calculate Euclidean distance between wrist and middle finger tip
-                # distance = np.sqrt((wrist.x - middle_finger_tip.x) ** 2 + (wrist.y - middle_finger_tip.y) ** 2)
+                distance = np.sqrt((wrist.x - middle_finger_tip.x) ** 2 + (wrist.y - middle_finger_tip.y) ** 2)
                 # distance_middle_thumb  = np.sqrt((thumb.x - middle_finger_tip.x) ** 2 + (thumb.y - middle_finger_tip.y) ** 2)
                 # print(distance)
+                jump.append(distance)
+                if len(jump) > 2:
+                    if jump[-1] <= 0.14:
+                        direction_byte = b'\x05'
+                        print("jump")
+                        client_socket.sendto(direction_byte, server_address)
+                        response, server_address = client_socket.recvfrom(1024)
+                        print("Received response:", response)
+
                 # print(distance_middle_thumb)
                 threshold_middle_wrist = 0.21 
                 threshold_thumb_index = 0.095

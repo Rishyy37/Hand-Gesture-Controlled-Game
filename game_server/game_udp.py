@@ -71,6 +71,9 @@ while run:
         elif direction == 3:
             print("Received: Down")
             y += vel
+        elif direction == 5:
+            print("jump")
+            # y += vel
         elif direction == 4:
             print("No movement")
 

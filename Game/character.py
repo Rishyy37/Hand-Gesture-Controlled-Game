@@ -31,7 +31,7 @@ class player():
         self.y = y
         self.width = width
         self.height = height
-        self.vel = 10
+        self.vel = 15
         self.left = False
         self.right = False
         self.jumpcount = 10
@@ -180,7 +180,7 @@ while run:
         if player.isJump:
             if player.jumpcount >= -12:
                 neg = 1 if player.jumpcount < 0 else -1
-                player.y += (player.jumpcount ** 2) * 0.5 * neg
+                player.y += (player.jumpcount ** 2) * 0.3 * neg
                 player.jumpcount -= 1
             else:
                 player.isJump = False

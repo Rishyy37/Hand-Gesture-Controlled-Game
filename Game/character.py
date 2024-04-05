@@ -9,30 +9,20 @@ pygame.init()
 window = pygame.display.set_mode((750,650))
 pygame.display.set_caption("New Game")
 
-walkRight = [pygame.image.load('assets/R1.png'), pygame.image.load('assets/R2.png'), pygame.image.load('assets/R3.png'), pygame.image.load('assets/R4.png'), pygame.image.load('assets/R5.png'), pygame.image.load('assets/R6.png'), pygame.image.load('assets/R7.png'), pygame.image.load('assets/R8.png'), pygame.image.load('assets/R9.png')]
-walkLeft = [pygame.image.load('assets/L1.png'), pygame.image.load('assets/L2.png'), pygame.image.load('assets/L3.png'), pygame.image.load('assets/L4.png'), pygame.image.load('assets/L5.png'), pygame.image.load('assets/L6.png'), pygame.image.load('assets/L7.png'), pygame.image.load('assets/L8.png'), pygame.image.load('assets/L9.png')]
-bg = pygame.image.load('assets/bg.jpg')
-char = pygame.image.load('assets/standing.png')
-red = pygame.image.load('assets/red.png')
-red_l = pygame.image.load('assets/red_left.png')
-town = pygame.image.load('assets/town.jpeg')
+walkRight = [pygame.image.load('Game/assets/R1.png'), pygame.image.load('Game/assets/R2.png'), pygame.image.load('Game/assets/R3.png'), pygame.image.load('Game/assets/R4.png'), pygame.image.load('Game/assets/R5.png'), pygame.image.load('Game/assets/R6.png'), pygame.image.load('Game/assets/R7.png'), pygame.image.load('Game/assets/R8.png'), pygame.image.load('Game/assets/R9.png')]
+walkLeft = [pygame.image.load('Game/assets/L1.png'), pygame.image.load('Game/assets/L2.png'), pygame.image.load('Game/assets/L3.png'), pygame.image.load('Game/assets/L4.png'), pygame.image.load('Game/assets/L5.png'), pygame.image.load('Game/assets/L6.png'), pygame.image.load('Game/assets/L7.png'), pygame.image.load('Game/assets/L8.png'), pygame.image.load('Game/assets/L9.png')]
+bg = pygame.image.load('Game/assets/bg.jpg')
+char = pygame.image.load('Game/assets/standing.png')
+red = pygame.image.load('Game/assets/red.png')
+red_l = pygame.image.load('Game/assets/red_left.png')
+town = pygame.image.load('Game/assets/town.jpeg')
 # town2 = pygame.transform.scale(town, (500, 500))
 
 town2 = pygame.transform.scale(town, (int(town.get_width() * 3), int(town.get_height() * 3)))
 
-# x = 650
-# y = 500
-# width = 64
-# height = 64
-# vel = 4
+
 
 run = True
-# isJump = False
-# jumpcount = 15
-
-# left = False
-# right = False
-# walkcount = 0
 
 class player():
 
@@ -86,6 +76,7 @@ game_server.bind(('localhost', 8000))
 
 print("Waiting for connection...")
 
+client_connected = True
 
 while run:
 
@@ -195,19 +186,6 @@ while run:
                 player.isJump = False
                 player.jumpcount = 12
 
-        # if player.x >= 750:
-        #     player.x = 750
-
-        # if player.y >= 750:
-        #     player.y = 750
-
-        # if player.x < 0:
-        #     player.x = 0
-
-        # if player.y < 0:
-        #     player.y = 0
-
-        # showbackground()
         window.fill((102,255,178)) # Clear the screen
         window.blit(town2, (0,10))
         # Display player
@@ -216,10 +194,16 @@ while run:
 
         response = '1'
         game_server.sendto(response.encode(), address)
+        client_connected = True
+
 
     except ConnectionResetError:
+        client_connected = False
+        run = False
+        if not client_connected:
+            # If client was already disconnected, break out of loop
+            break
         print("Client disconnected.")
-        break
 
 # Close the sockets
 # control_client.close()

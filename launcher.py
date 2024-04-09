@@ -4,7 +4,7 @@ import time
 
 def run_server():
     print("Starting game server...")
-    subprocess.run(["python", "Game/character.py"])
+    subprocess.run(["python", "Game/shoot.py"])
 
 def run_client():
     print("Starting hand control client...")

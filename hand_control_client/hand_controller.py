@@ -4,7 +4,12 @@ import mediapipe as mp
 from pynput.keyboard import Controller, Key
 import time
 import socket
+import ctypes
 
+# Function to get the screen resolution
+def get_screen_resolution():
+    user32 = ctypes.windll.user32
+    return user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
 
 # Create a socket client
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -22,46 +27,32 @@ frames = 0
 prev_landamark = None
 jump = []
 
+# Get screen resolution
+screen_width, screen_height = get_screen_resolution()
+print(screen_width, screen_height)
 
 def detect_movement(prev, current, keyboard):
     dx = current[0][0] - prev[0][0]
     dy = current[0][1] - prev[0][1]
 
-    # print(f"dx:{dx} , dy:{dy}")
     direction_byte = None
     if abs(dx) > 0.009:
         if dx > 0:
             print('right')
-            # keyboard.press(Key.right)
             direction_byte = b'\x01'
         else:
             print('left')
-            # keyboard.press(Key.left)
             direction_byte = b'\x00'
 
     elif abs(dy) > 0.009:
         if dy < 0:
             print('up')
-            # keyboard.press(Key.up)
             direction_byte = b'\x02'
         else:
             print('down')
-            # keyboard.press(Key.down)
             direction_byte = b'\x03'
 
-    # if direction_byte is None:
-    #     direction_byte = b'\x04'
-    # elif abs(dx) > 0.009 and abs(dy) > 0.009:
-    #     if dx > 0 and dy > 0:
-    #         print( 'up and right')
-    #     elif dx < 0 and  dy > 0:
-    #         print("up and left")
-    #     elif dx< 0 and dy <0:
-    #         print( "down and left")
-    #     else:
-    #         print("down and right")
     return direction_byte
-
 
 with mp_hands.Hands(
         model_complexity=0,
@@ -84,31 +75,15 @@ with mp_hands.Hands(
             for hand_landmarks in results.multi_hand_landmarks:
                 wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
                 current_landmark = [(wrist.x, wrist.y)]
-                # print(
-                #     f'Index finger tip coordinates: (',
-                #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x }, '
-                #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y})'
-                # )
-                # print(
-                #     f'THUMB_TIP coordinates: (',
-                #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x}, '
-                #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y})'
-                # )
                 wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
                 middle_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
                 thumb = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
                 index_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
                 dis_index_thumb = np.sqrt(
                     (index_tip.x - thumb.x)**2 + (index_tip.y - thumb.y)**2 + (index_tip.z - thumb.z)**2)
-                # print(dis_index_thumb)
-                # print(f"z index:{index_tip.z}")
-
-                # Calculate Euclidean distance between wrist and middle finger
-                # tip
+                
                 distance = np.sqrt((wrist.x - middle_finger_tip.x)
                                    ** 2 + (wrist.y - middle_finger_tip.y) ** 2)
-                # distance_middle_thumb  = np.sqrt((thumb.x - middle_finger_tip.x) ** 2 + (thumb.y - middle_finger_tip.y) ** 2)
-                # print(distance)
                 jump.append(distance)
                 if len(jump) > 2:
                     if jump[-1] <= 0.13:
@@ -118,17 +93,9 @@ with mp_hands.Hands(
                         response, server_address = client_socket.recvfrom(1024)
                         print("Received response:", response)
 
-                # print(distance_middle_thumb)
                 threshold_middle_wrist = 0.21
                 threshold_thumb_index = 0.095
 
-                # # If the distance is below a certain threshold, consider it as a fist
-                # if dis_index_thumb < threshold_thumb_index:
-                #     keyboard.press(Key.space)
-                #     # keyboard.press(Key.up)
-                # else:
-                #     # keyboard.press(Key.up)
-                #     keyboard.release(Key.space)
                 if prev_landamark:
                     direction_byte = detect_movement(
                         prev=prev_landamark, current=current_landmark, keyboard=keyboard)
@@ -154,16 +121,26 @@ with mp_hands.Hands(
         elapsed_time = time.time() - start
         if elapsed_time:  # Update FPS every second
             fps = frames / elapsed_time
-            # print("FPS:", fps)
             cv2.putText(image, f"FPS: {int(fps)}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
             frames = 0
             start = time.time()
 
+        # Get the size of the window
+        window_width, window_height = 400, 300
+
+        # Calculate the position to place the window (top-right corner)
+        x_position = screen_width - window_width
+        y_position = 0
+
+        # Move the window to the calculated position
+        cv2.namedWindow("MediaPipe Hands", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("MediaPipe Hands", window_width, window_height)
+        cv2.moveWindow("MediaPipe Hands", x_position, y_position)
+
         cv2.imshow('MediaPipe Hands', image)
         if cv2.waitKey(5) & 0xFF == 27:
             break
-
 
 cap.release()
 cv2.destroyAllWindows()

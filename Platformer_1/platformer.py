@@ -7,6 +7,8 @@ import socket
 import sys
 import time
 
+
+
 pygame.mixer.pre_init(44100, -16, 2, 512)
 mixer.init()
 pygame.init()
@@ -30,8 +32,8 @@ font_score = pygame.font.SysFont('Bauhaus 93', 30)
 tile_size = 50
 game_over = 0
 main_menu = True
-level = 3
-max_levels = 7
+level = 1
+max_levels = 2
 score = 0
 
 
@@ -76,6 +78,7 @@ def reset_level(level):
     lava_group.empty()
     exit_group.empty()
 
+    world_data = None
     # load in level data and create world
     if path.exists(f'level{level}_data'):
         pickle_in = open(f'level{level}_data', 'rb')
@@ -126,6 +129,7 @@ class Player():
         dy = 0
         walk_cooldown = 5
         col_thresh = 20
+        player_vel = 10
         
         if game_over == 0:
             # get keypresses
@@ -140,12 +144,12 @@ class Player():
                 self.jumped = False
             # if key[pygame.K_LEFT]:
             if direction == 0:
-                dx -= 5
+                dx -= player_vel
                 self.counter += 1
                 self.direction = -1
             # if key[pygame.K_RIGHT]:
             if direction == 1:
-                dx += 5
+                dx += player_vel
                 self.counter += 1
                 self.direction = 1
             if direction != 0 and direction != 1:
@@ -464,12 +468,7 @@ while run:
     else:
         world.draw()
 
-        start_time = time.time()
-        data, address = game_server.recvfrom(1024)
-        end_time = time.time()
-        print(data)
-        print(f"latency :{end_time-start_time}")
-
+        
         if game_over == 0:
 
             keys = pygame.key.get_pressed()
@@ -491,14 +490,18 @@ while run:
         coin_group.draw(screen)
         exit_group.draw(screen)
 
-        try:
-            game_over = player.update(game_over,data)
-            response = '1'
-            game_server.sendto(response.encode(), address)
-        except ConnectionResetError:
-            run = False
-            print("Client disconnected.")
-        print("Akshat")
+        start_time = time.time()
+        data, address = game_server.recvfrom(1024)
+        end_time = time.time()
+        print(data)
+        print(f"latency :{end_time-start_time}")
+
+        game_over = player.update(game_over,data)
+        response = '1'
+        game_server.sendto(response.encode(), address)
+        # except ConnectionResetError:
+        #     run = False
+        #     print("Client disconnected.")
 
         # if player has died
         if game_over == -1:
@@ -511,6 +514,7 @@ while run:
         # if player has completed the level
         if game_over == 1:
             # reset game and go to next level
+            print(f"level is {level}")
             level += 1
             if level <= max_levels:
                 # reset level
